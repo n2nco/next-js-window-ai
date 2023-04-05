@@ -85,7 +85,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-4">Next JS x window.ai</h1>
+        <h1 className="text-3xl font-bold mb-4">Next JS x window.ai x web3</h1>
         <Web3Button />
         <div className="overflow-y-auto h-96 mb-4">
           {messages.map((message, index) => (
