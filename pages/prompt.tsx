@@ -41,7 +41,7 @@ User_State:
 }
 
 User_chat:
-User: Do I have a crypto account connected?
+User message: Do I have a crypto account connected?
 Output:  Yes you do. Account 0xF2F0dc35ba023c7F00141a2163912D4F0449B35c is connected to mainnet. It's balance is 0.0ETH.
 
 
@@ -54,7 +54,7 @@ User_State:
     network: "mainnet",
 }
 
-User: Hey! Can you send 0.05ETH to dnahost.eth?
+User message: Hey! Can you send 0.05ETH to dnahost.eth?
 Output: Absolutely! I'll just need you to confirm the transaction. \n
  <start_command>
 {
@@ -70,5 +70,4 @@ Output: Absolutely! I'll just need you to confirm the transaction. \n
 
 The current User State and chat follow. Reply with your next command or response to the user.
 
-User_State: 
 `
