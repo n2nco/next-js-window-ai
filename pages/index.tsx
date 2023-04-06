@@ -7,7 +7,6 @@ import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
 import { useBalance } from 'wagmi'
 import { getNetwork } from '@wagmi/core'
 
-
 import { SendTransaction } from './SendTransaction'
 
 
@@ -232,13 +231,9 @@ const App: React.FC = () => {
   // const extractedMessage = extractMessage(inputString);
   // console.log(extractedMessage);
   
-
-  
-  
   // const inputString = "<start_command> { \"command\": { \"name\": \"ask_user_a_question\", \"args\":{ \"question\": \"Sure! Which network's balance would you like to check?\" } } } <end_command>";
   // const extractedQuestion = extractQuestion(inputString);
   // console.log(extractedQuestion);
-  
 
 
 
