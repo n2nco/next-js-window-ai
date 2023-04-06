@@ -1,4 +1,4 @@
-import { useSendTransaction, usePrepareSendTransaction, useEnsAddress, mainnet } from 'wagmi';
+import { useSendTransaction, usePrepareSendTransaction, useEnsAddress, mainnet, useWaitForTransaction } from 'wagmi';
 import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 
@@ -22,6 +22,14 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
 
   // Your logic for sending the transaction using the resolved address
 
+  // var config
+
+  // const { config, error } = usePrepareSendTransaction({
+  //   request: {
+  //     to: 'moxey.eth',
+  //     value: parseEther('1'),
+  //   },
+  // })
 
 
   var config
@@ -32,28 +40,35 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
         // gasLimit: 21000,
         value: ethers.utils.parseEther(value),
       },
-      chainId: 1,
+      chainId: mainnet.id,
+    })
+      // chainId: 1,
    
 
-      onSuccess(data) {
-        console.log('Success', data);
-        alert('Success', data);
-      },
-      onError(error) {
-        console.log('Error sending tx: ', error);
-      },
-      onSettled(data, error) {
-        console.log('Settled tx', { data, error });
-        setSettledTx({ data, error })
-      },
-    });
+      // onSuccess(data) {
+      //   console.log('Success', data);
+      //   alert('Success', data);
+      // },
+      // onError(error) {
+      //   console.log('Error sending tx: ', error);
+      // },
+      // onSettled(data, error) {
+      //   console.log('Settled tx', { data, error });
+      //   setSettledTx({ data, error })
+      // },
+    // });
   }
 
-  const { data, isLoading, isSuccess, sendTransaction } = useSendTransaction(config);
+  const { data, isSettled, status, sendTransaction } = useSendTransaction(config);
+ 
+  const { isLoading, isSuccess } = useWaitForTransaction({
+    hash: data?.hash,
+  })
 
-  const triggerSendTransaction = () => {
+  const triggerSendTransaction = async () => {
     if (sendTransaction && to && amount) {
-      sendTransaction();
+      let x  = await sendTransaction();
+      console.log(x)
     }
   };
 
@@ -66,9 +81,17 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
       {/* <button disabled={!sendTransaction} onClick={() => sendTransaction?.()}>
         Send Transaction
       </button> */}
-       {isSettledTx && <p>{data}</p>}
+       {isSettledTx && <p>{data ? data : "no data"}</p>}
       {isLoading && <div>Check Wallet</div>}
       {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
+      {isSuccess && (
+        <div>
+          Successfully sent {amount} ether to {to}
+          <div>
+            <a href={`https://etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

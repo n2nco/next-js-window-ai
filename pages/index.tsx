@@ -34,7 +34,6 @@ const App: React.FC = () => {
   })
 
 
-
   const extractCommandAndArgs = (inputString: string) => {
       const startCommandString = '<start_command>';
       const endCommandString = '<end_command>';
