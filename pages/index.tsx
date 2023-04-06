@@ -56,19 +56,17 @@ const App: React.FC = () => {
     
 
     const executeCommand = ({ commandName, to, from, amount }: { commandName: any, to?: any, from?: any, amount?: any }) => {
-    
       switch (commandName) {
         case "ask_user_a_question":
           // Do something with the fromAddress and amount variables just in case?
           // setLatestCommandArgs({to: to, amount: amount})
           setLatestCommand("ask_user_a_question")
+          break
 
         case "send_transaction":
           // Do something with the fromAddress and amount variables
           setLatestCommandArgs({to: to, amount: amount})
           setLatestCommand("send_transaction")
-
-
           console.log(`Sending ${amount} from ${from ?? 'blank'}  to ${to}`);
           break;
     
@@ -161,7 +159,8 @@ const App: React.FC = () => {
         const user_state = {
           balance: data ? `${data.formatted}${data.symbol}` : undefined,
           address,
-          network: "mainnet"
+          network: chain?.name || 'Unknown',
+
         };
         const userStateString = JSON.stringify(user_state, null, 2);
 
@@ -169,13 +168,15 @@ const App: React.FC = () => {
       
 
        console.log('full outbound prompt: ')
-       var p =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
+
+       var prompt_userstate_newmessage =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
        
       //  console.log(JSON.stringify(p))
       //  var p_str = JSON.stringify(p)
 
-       let result = await (window as any).ai.getCompletion(
-          { messages: [...messages, { role: 'user', content: p} ]}//new - TODO fix where the prompt is situated
+       var content_for_ai = { messages: [...messages, { role: 'user', content: prompt_userstate_newmessage} ]}
+
+       let result = await (window as any).ai.getCompletion( content_for_ai //new - TODO fix where the prompt is situated
 
           // { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
 
@@ -208,7 +209,7 @@ const App: React.FC = () => {
         <Web3Button />
         <div>
         {latestCommand === "send_transaction" && (
-        <SendTransaction latestCommandArgs={latestCommandArgs} />
+          <SendTransaction latestCommandArgs={latestCommandArgs} />
         )}
          </div>
         
