@@ -61,13 +61,14 @@ const App: React.FC = () => {
           // Do something with the fromAddress and amount variables just in case?
           // setLatestCommandArgs({to: to, amount: amount})
           setLatestCommand("ask_user_a_question")
+          console.log(`case ask_user_a_question hit. Asking user a question`);
           break
 
         case "send_transaction":
           // Do something with the fromAddress and amount variables
           setLatestCommandArgs({to: to, amount: amount})
           setLatestCommand("send_transaction")
-          console.log(`Sending ${amount} from ${from ?? 'blank'}  to ${to}`);
+          console.log(`case send_transaction hit. Sending ${amount} from ${from ?? 'blank'}  to ${to}`);
           break;
     
         // Add more cases for other command names if needed
@@ -93,61 +94,65 @@ const App: React.FC = () => {
 
     const non_streaming_handler = async (result?: { message: Message }, error?: Error) => {
 
-        if (error) {
-          console.error(error);
+      if (error) {
+        console.error(error);
+        setLoading(false);
+      } else if (result) {
+        setLoading(false);
+    
+        const lastMessage = updatedMessages[updatedMessages.length - 1];
+    
+        if (lastMessage.role === 'user') { // this is the first message from the assistant
+          console.log("result.message from assistant: ");
+          console.log(result.message);
+          result.message.content = result.message.content.replace(/^Output:\s*/, ''); //remove 'Output: ' from the beginning of the message
+    
+          // executeCommand(result.message)
           setLoading(false);
-        } else if (result) {
-          setLoading(false);
-
-          const lastMessage = updatedMessages[updatedMessages.length - 1];
-
-          if (lastMessage.role === 'user') { // this is the first message from the assistant
-            console.log("result.message: ")
-            console.log(result.message)
-            result.message.content = result.message.content.replace(/^Output:\s*/, ''); //remove 'Output: ' from the beginning of the message
-
-            // executeCommand(result.message)
-            setLoading(false);
-            updatedMessages = [
-              ...updatedMessages,
-              {
-                role: 'assistant',
-                content: result.message.content,
-              },
-            ];
-          } else {
-            updatedMessages = updatedMessages.map((message, index) => {
-              if (index === updatedMessages.length - 1) {
-                return {
-                  ...message,
-                  content: message.content + result.message.content,
-                };
-              }
-             
-              return message;
-
-            });
-          }
-          if (result.message.content.includes('<start_command>')) {
-            setParsingCommand(true)
-            var cmd_and_args = extractCommandAndArgs(result.message.content)
-            executeCommand({ commandName: cmd_and_args.commandName, to: cmd_and_args.to, from: cmd_and_args.from, amount: cmd_and_args.amount })
-
-            // executeCommand(result.message.content)
-          }
-          if (parsingCommand) {
-            if (result.message.content.includes('<end_command>')) {
-              setParsingCommand(false)
-              // executeCommand(latestCommand)
-            } else {
-              setLatestCommand(latestCommand + result.message.content)
+          updatedMessages = [
+            ...updatedMessages,
+            {
+              role: 'assistant',
+              content: result.message.content,
+            },
+          ];
+        } else {
+          updatedMessages = updatedMessages.map((message, index) => {
+            if (index === updatedMessages.length - 1) {
+              return {
+                ...message,
+                content: message.content + result.message.content,
+              };
             }
-            return
-          }
-          setMessages(updatedMessages);
-
+    
+            return message;
+    
+          });
         }
+        // Update the state with the new updatedMessages array
+        setMessages(updatedMessages);
+    
+        if (result.message.content.includes('<start_command>')) {
+          setParsingCommand(true);
+          var cmd_and_args = extractCommandAndArgs(result.message.content);
+          executeCommand({ commandName: cmd_and_args.commandName, to: cmd_and_args.to, from: cmd_and_args.from, amount: cmd_and_args.amount });
+    
+          // executeCommand(result.message.content)
+        }
+        if (parsingCommand) {
+          if (result.message.content.includes('<end_command>')) {
+            setParsingCommand(false);
+            // executeCommand(latestCommand)
+          } else {
+            setLatestCommand(latestCommand + result.message.content);
+          }
+          return;
+        }
+        setMessages(updatedMessages);
+    
       }
+    }
+    
     
 
     if ((window as any)?.ai) {
@@ -164,20 +169,13 @@ const App: React.FC = () => {
         };
         const userStateString = JSON.stringify(user_state, null, 2);
 
-        // console.log("\n" + userStateString + '\n' + newMessage)
-      
-
-       console.log('full outbound prompt: ')
+      console.log('new msg:', newMessage.content)
 
        var prompt_userstate_newmessage =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
-       
-      //  console.log(JSON.stringify(p))
-      //  var p_str = JSON.stringify(p)
-
        var content_for_ai = { messages: [...messages, { role: 'user', content: prompt_userstate_newmessage} ]}
-
+       console.log('full outbound prompt: ')
+       console.dir(content_for_ai)
        let result = await (window as any).ai.getCompletion( content_for_ai //new - TODO fix where the prompt is situated
-
           // { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
 
           //streamingOptions
@@ -201,6 +199,48 @@ const App: React.FC = () => {
   }, [messages]);
 
 
+  // function formatResponseIfNeeded(inputString: string) {
+  //   const regex = /"question":\s*"([^"]+)"/;
+  //   const match = inputString.match(regex);
+  
+  //   if (match && match[1]) {
+  //     return match[1];
+  //   } else {
+  //     return inputString
+  //   }
+  // }
+
+  function formatResponseIfNeeded(inputString: string) {
+    const questionRegex = /"question":\s*"([^"]+)"/;
+    const sendTransactionRegex = /"name":\s*"send_transaction",\s*"args":\s*\{\s*"to":\s*"([^"]+)",\s*"amount":\s*"([^"]+)"/;
+    let match;
+  
+    match = inputString.match(questionRegex);
+    if (match && match[1]) {
+      return match[1];
+    }
+  
+    match = inputString.match(sendTransactionRegex);
+    if (match && match[1] && match[2]) {
+      return `Absolutely! Sending ${match[2]} to ${match[1]}. I'll just need your to confirm this tx in your wallet.`;
+    }
+  
+    return inputString
+  }
+  
+  // const inputString = '<start_command>\n{\n    "command": {\n        "name": "send_transaction",\n        "args":{\n            "to": "langwallet.eth",\n            "amount": "0.0005"\n        }\n    }\n}\n<end_command>';
+  // const extractedMessage = extractMessage(inputString);
+  // console.log(extractedMessage);
+  
+
+  
+  
+  // const inputString = "<start_command> { \"command\": { \"name\": \"ask_user_a_question\", \"args\":{ \"question\": \"Sure! Which network's balance would you like to check?\" } } } <end_command>";
+  // const extractedQuestion = extractQuestion(inputString);
+  // console.log(extractedQuestion);
+  
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -217,7 +257,8 @@ const App: React.FC = () => {
           {messages.map((message, index) => (
             <div key={index} className={`mb-2 ${message.role === 'user' ? 'text-right' : ''}`}>
               <span className={`inline-block p-2 rounded-lg text-left ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
-                {message.content}
+
+                {formatResponseIfNeeded(message.content)}
               </span>
             </div>
           ))}
