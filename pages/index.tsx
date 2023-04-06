@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Web3Button } from '@web3modal/react'
 import {prompt} from './prompt'
 
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
+
 
 
 interface Message {
@@ -35,6 +37,71 @@ const App: React.FC = () => {
     setLoading(true);
 
     let updatedMessages = [...messages, newMessage];
+
+
+
+    const non_streaming_handler = async (result?: { message: Message }, error?: Error) => {
+
+        if (error) {
+          console.error(error);
+          setLoading(false);
+        } else if (result) {
+          setLoading(false);
+          
+
+          const lastMessage = updatedMessages[updatedMessages.length - 1];
+          if (lastMessage.role === 'user') {
+            console.log("result.message: ")
+            console.log(result.message)
+
+            // executeCommand(result.message)
+            setLoading(false);
+            updatedMessages = [
+              ...updatedMessages,
+              {
+                role: 'assistant',
+                content: result.message.content,
+              },
+            ];
+          } else {
+            updatedMessages = updatedMessages.map((message, index) => {
+              if (index === updatedMessages.length - 1) {
+                return {
+                  ...message,
+                  content: message.content + result.message.content,
+                };
+              }
+             
+              return message;
+
+            });
+          }
+          if (result.message.content.includes('<start_command>')) {
+            setParsingCommand(true)
+            return
+            
+            // executeCommand(result.message.content)
+          }
+          if (parsingCommand) {
+            if (result.message.content.includes('<end_command>')) {
+              setParsingCommand(false)
+              executeCommand(latestCommand)
+            } else {
+              setLatestCommand(latestCommand + result.message.content)
+            }
+            return
+          }
+          if (result.message.content.includes('<end_command>')) {
+            setParsingCommand(false)
+            executeCommand(latestCommand)
+            return
+          }
+          setMessages(updatedMessages);
+          
+
+        }
+      }
+    
 
     
 
@@ -105,10 +172,13 @@ const App: React.FC = () => {
 
     if ((window as any)?.ai) {
       try {
-        await (window as any).ai.getCompletion(
+       console.log('about to api req: ', { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] } )
+       let result = await (window as any).ai.getCompletion(
           { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] },
-          streamingOptions
+          //streamingOptions
         );
+        console.log("result: ", result)
+        non_streaming_handler(result)
       } catch (e) {
         setLoading(false);
         console.error(e);
