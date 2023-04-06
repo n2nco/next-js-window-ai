@@ -3,6 +3,13 @@ import { Web3Button } from '@web3modal/react'
 import {prompt} from './prompt'
 
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
+import { useBalance } from 'wagmi'
+
+
+import { SendTransaction } from './SendTransaction'
+
+
 
 
 
@@ -18,24 +25,68 @@ const App: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [parsingCommand, setParsingCommand] = useState<boolean>(false);
   const [latestCommand, setLatestCommand] = useState<string>("");
+  const [latestCommandArgs, setLatestCommandArgs] = useState<object>({to: "", amount: ""});
+  
+  const { address, isConnecting, isDisconnected } = useAccount()
+  const { data, isError, isLoading } = useBalance({
+    address: address
+  })
 
 
-  const executeCommand = (command: string) => {
-    console.log("command")
-    // alert("command ", command)
-    console.log(command)
-  }
+
+  const extractCommandAndArgs = (inputString: string) => {
+      const startCommandString = '<start_command>';
+      const endCommandString = '<end_command>';
+    
+      // Extract the command JSON string from the input string
+      const commandString = inputString.substring(
+        inputString.indexOf(startCommandString) + startCommandString.length,
+        inputString.indexOf(endCommandString)
+      );
+    
+      // Parse the command JSON string to an object
+      const commandObj = JSON.parse(commandString);
+    
+      // Extract the command name, from_address, and amount from the command object
+      const commandName = commandObj.command.name;
+      const fromAddress = commandObj.command.args.from_address;
+      const amount = commandObj.command.args.amount;
+    
+      return { commandName, fromAddress, amount };
+    }
+    
+
+
+  const executeCommand = (commandName: any, fromAddress: any, amount?:any, toAddress?: any) => {
+    
+      switch (commandName) {
+
+        case "send_transaction":
+          // Do something with the fromAddress and amount variables
+          setLatestCommandArgs({toAddress: toAddress, amount: amount})
+          setLatestCommand("send_transaction")
+
+
+          console.log(`Sending ${amount} from ${fromAddress}`);
+          break;
+    
+        // Add more cases for other command names if needed
+        default:
+          console.log(`Unknown command: ${commandName}`);
+          break;
+      }
+    }
+    
+  
+
 
   const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!inputValue) return;
-
     const newMessage: Message = { role: 'user', content: inputValue };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputValue('');
-
     setLoading(true);
-
     let updatedMessages = [...messages, newMessage];
 
 
@@ -50,7 +101,8 @@ const App: React.FC = () => {
           
 
           const lastMessage = updatedMessages[updatedMessages.length - 1];
-          if (lastMessage.role === 'user') {
+
+          if (lastMessage.role === 'user') { // this is the first message from the assistant
             console.log("result.message: ")
             console.log(result.message)
 
@@ -78,24 +130,24 @@ const App: React.FC = () => {
           }
           if (result.message.content.includes('<start_command>')) {
             setParsingCommand(true)
-            return
-            
+            var cmd_and_args = extractCommandAndArgs(result.message.content)
+            executeCommand(cmd_and_args.commandName, cmd_and_args.fromAddress, cmd_and_args.amount)
             // executeCommand(result.message.content)
           }
           if (parsingCommand) {
             if (result.message.content.includes('<end_command>')) {
               setParsingCommand(false)
-              executeCommand(latestCommand)
+              // executeCommand(latestCommand)
             } else {
               setLatestCommand(latestCommand + result.message.content)
             }
             return
           }
-          if (result.message.content.includes('<end_command>')) {
-            setParsingCommand(false)
-            executeCommand(latestCommand)
-            return
-          }
+          // if (result.message.content.includes('<end_command>')) {
+          //   setParsingCommand(false)
+          //   executeCommand(latestCommand)
+          //   return
+          // }
           setMessages(updatedMessages);
           
 
@@ -105,76 +157,86 @@ const App: React.FC = () => {
 
     
 
-    const streamingOptions = {
-      temperature: 1,
-      maxTokens: 1000,
-      onStreamResult: (result?: { message: Message }, error?: Error) => {
-        if (error) {
-          console.error(error);
-          setLoading(false);
-        } else if (result) {
-          setLoading(false);
+    // const streamingOptions = {
+    //   temperature: 1,
+    //   maxTokens: 1000,
+    //   onStreamResult: (result?: { message: Message }, error?: Error) => {
+    //     if (error) {
+    //       console.error(error);
+    //       setLoading(false);
+    //     } else if (result) {
+    //       setLoading(false);
           
 
-          const lastMessage = updatedMessages[updatedMessages.length - 1];
-          if (lastMessage.role === 'user') {
-            console.log("result.message: ")
-            console.log(result.message)
+    //       const lastMessage = updatedMessages[updatedMessages.length - 1];
+    //       if (lastMessage.role === 'user') {
+    //         console.log("result.message: ")
+    //         console.log(result.message)
 
-            // executeCommand(result.message)
-            setLoading(false);
-            updatedMessages = [
-              ...updatedMessages,
-              {
-                role: 'assistant',
-                content: result.message.content,
-              },
-            ];
-          } else {
-            updatedMessages = updatedMessages.map((message, index) => {
-              if (index === updatedMessages.length - 1) {
-                return {
-                  ...message,
-                  content: message.content + result.message.content,
-                };
-              }
+    //         // executeCommand(result.message)
+    //         setLoading(false);
+    //         updatedMessages = [
+    //           ...updatedMessages,
+    //           {
+    //             role: 'assistant',
+    //             content: result.message.content,
+    //           },
+    //         ];
+    //       } else {
+    //         updatedMessages = updatedMessages.map((message, index) => {
+    //           if (index === updatedMessages.length - 1) {
+    //             return {
+    //               ...message,
+    //               content: message.content + result.message.content,
+    //             };
+    //           }
              
-              return message;
+    //           return message;
 
-            });
-          }
-          if (result.message.content.includes('<start_command>')) {
-            setParsingCommand(true)
-            return
+    //         });
+    //       }
+    //       if (result.message.content.includes('<start_command>')) {
+    //         setParsingCommand(true)
+    //         return
             
-            // executeCommand(result.message.content)
-          }
-          if (parsingCommand) {
-            if (result.message.content.includes('<end_command>')) {
-              setParsingCommand(false)
-              executeCommand(latestCommand)
-            } else {
-              setLatestCommand(latestCommand + result.message.content)
-            }
-            return
-          }
-          if (result.message.content.includes('<end_command>')) {
-            setParsingCommand(false)
-            executeCommand(latestCommand)
-            return
-          }
-          setMessages(updatedMessages);
+    //         // executeCommand(result.message.content)
+    //       }
+    //       if (parsingCommand) {
+    //         if (result.message.content.includes('<end_command>')) {
+    //           setParsingCommand(false)
+    //           executeCommand(latestCommand)
+    //         } else {
+    //           setLatestCommand(latestCommand + result.message.content)
+    //         }
+    //         return
+    //       }
+    //       if (result.message.content.includes('<end_command>')) {
+    //         setParsingCommand(false)
+    //         executeCommand(latestCommand)
+    //         return
+    //       }
+    //       setMessages(updatedMessages);
           
 
-        }
-      },
-    };
+    //     }
+    //   },
+    // };
 
     if ((window as any)?.ai) {
       try {
+      //  let accountState = await useAccount()
+        // console.log("accountState: ", accountState)
+        const user_state = {
+          balance: data ? `${data.formatted}${data.symbol}` : undefined,
+          address,
+          network: "mainnet"
+        };
+
+
        console.log('about to api req: ', { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] } )
+
        let result = await (window as any).ai.getCompletion(
-          { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] },
+          { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
           //streamingOptions
         );
         console.log("result: ", result)
@@ -194,11 +256,20 @@ const App: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
         <h1 className="text-3xl font-bold mb-4">Next JS x window.ai x web3</h1>
         <Web3Button />
+        <div>
+        {latestCommand === "send_transaction" && (
+        <SendTransaction latestCommandArgs={latestCommandArgs} />
+        )}
+
+         </div>
+        
         <div className="overflow-y-auto h-96 mb-4">
           {messages.map((message, index) => (
             <div key={index} className={`mb-2 ${message.role === 'user' ? 'text-right' : ''}`}>

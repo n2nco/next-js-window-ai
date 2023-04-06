@@ -34,10 +34,12 @@ RESPONSE FORMAT:
 Example: 
 
 User_State:
-networks: ["polygon_mainnet", "ethereum_mainnet"]
-connected_account_addresses : {
-  0x1230489120181: "12ETH"
+{
+    balance: "0.0ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "mainnet",
 }
+
 User_chat:
 User: Do I have a crypto account connected?
 Output:  yes. account 0x1230489120181 is connected. it's balance is 12ETH.
@@ -46,11 +48,13 @@ Output:  yes. account 0x1230489120181 is connected. it's balance is 12ETH.
 Example 2:
 
 User_State:
-networks: ["polygon_mainnet", "ethereum_mainnet"]
-connected_account_addresses : {
-  0x1230489120181: "12ETH"
+{
+    balance: "0.5ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "mainnet",
 }
-User: Hey! Can you send 0.5ETH to dnahost.eth?
+
+User: Hey! Can you send 0.05ETH to dnahost.eth?
 Output: Sure!
  <start_command>
 {
@@ -62,5 +66,7 @@ Output: Sure!
         }
     }
 }
+<end_command>
 
+Begin.
 `
