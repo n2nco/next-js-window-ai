@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Web3Button } from '@web3modal/react'
+import {prompt} from './prompt'
+
+
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -11,6 +14,15 @@ const App: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [parsingCommand, setParsingCommand] = useState<boolean>(false);
+  const [latestCommand, setLatestCommand] = useState<string>("");
+
+
+  const executeCommand = (command: string) => {
+    console.log("command")
+    // alert("command ", command)
+    console.log(command)
+  }
 
   const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,6 +36,8 @@ const App: React.FC = () => {
 
     let updatedMessages = [...messages, newMessage];
 
+    
+
     const streamingOptions = {
       temperature: 1,
       maxTokens: 1000,
@@ -33,9 +47,14 @@ const App: React.FC = () => {
           setLoading(false);
         } else if (result) {
           setLoading(false);
+          
 
           const lastMessage = updatedMessages[updatedMessages.length - 1];
           if (lastMessage.role === 'user') {
+            console.log("result.message: ")
+            console.log(result.message)
+
+            // executeCommand(result.message)
             setLoading(false);
             updatedMessages = [
               ...updatedMessages,
@@ -52,11 +71,34 @@ const App: React.FC = () => {
                   content: message.content + result.message.content,
                 };
               }
+             
               return message;
+
             });
           }
-
+          if (result.message.content.includes('<start_command>')) {
+            setParsingCommand(true)
+            return
+            
+            // executeCommand(result.message.content)
+          }
+          if (parsingCommand) {
+            if (result.message.content.includes('<end_command>')) {
+              setParsingCommand(false)
+              executeCommand(latestCommand)
+            } else {
+              setLatestCommand(latestCommand + result.message.content)
+            }
+            return
+          }
+          if (result.message.content.includes('<end_command>')) {
+            setParsingCommand(false)
+            executeCommand(latestCommand)
+            return
+          }
           setMessages(updatedMessages);
+          
+
         }
       },
     };
@@ -64,7 +106,7 @@ const App: React.FC = () => {
     if ((window as any)?.ai) {
       try {
         await (window as any).ai.getCompletion(
-          { messages: [{ role: 'system', content: 'You are a helpful assistant.' }, ...messages, newMessage] },
+          { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] },
           streamingOptions
         );
       } catch (e) {
