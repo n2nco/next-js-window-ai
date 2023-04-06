@@ -1,17 +1,41 @@
 
 
 import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
+import { ethers } from 'ethers';
+import { useEffect } from 'react'
  
-export function SendTransaction({ to, amount } = latestCommandArgs) {
+export function SendTransaction( { latestCommandArgs: { to = '', amount = '' } = {} } = {}) {
   var value = amount 
-  const { config } = usePrepareSendTransaction({
-    request: { to, value: BigNumber.from(value) },
-  })
-  const { data, isLoading, isSuccess, sendTransaction } =
-    useSendTransaction(config)
+  // const value = parseFloat(amount);
+
+  let config
+
+  if (to && amount) {
+    config = { config } = usePrepareSendTransaction({
+      request: { 
+        to: to, 
+        value: ethers.utils.parseEther(value)
+      },
+        
+      onSuccess(data) {
+        console.log('Success', data)
+        alert("Success", data)
+      },
+      onError(error) {
+        console.log('Error sending tx: ', error)
+      },
+      onSettled(data, error) {
+        console.log('Settled tx', { data, error })
+      },
+    })
+  }
+
+  const { data, isLoading, isSuccess, sendTransaction } =  useSendTransaction(config)
+  
+
 
   useEffect(() => {
-    if (sendTransaction) {
+    if (sendTransaction && to && amount) {
       sendTransaction()
     }
   }, [sendTransaction])

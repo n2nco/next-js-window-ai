@@ -48,26 +48,31 @@ const App: React.FC = () => {
       const commandObj = JSON.parse(commandString);
     
       // Extract the command name, from_address, and amount from the command object
-      const commandName = commandObj.command.name;
-      const fromAddress = commandObj.command.args.from_address;
-      const amount = commandObj.command.args.amount;
+      const commandName = commandObj.command?.name ?? '';
+      const to = commandObj.command?.args?.to ?? '';
+      const amount = commandObj.command?.args?.amount ?? '';
+      const from = commandObj.command?.args?.from ?? '';
+
     
-      return { commandName, fromAddress, amount };
+      return { commandName, to, amount, from  };
     }
     
 
-
-  const executeCommand = (commandName: any, fromAddress: any, amount?:any, toAddress?: any) => {
+    const executeCommand = ({ commandName, to, from, amount }: { commandName: any, to?: any, from?: any, amount?: any }) => {
     
       switch (commandName) {
+        case "ask_user_a_question":
+          // Do something with the fromAddress and amount variables just in case?
+          // setLatestCommandArgs({to: to, amount: amount})
+          setLatestCommand("ask_user_a_question")
 
         case "send_transaction":
           // Do something with the fromAddress and amount variables
-          setLatestCommandArgs({toAddress: toAddress, amount: amount})
+          setLatestCommandArgs({to: to, amount: amount})
           setLatestCommand("send_transaction")
 
 
-          console.log(`Sending ${amount} from ${fromAddress}`);
+          console.log(`Sending ${amount} from ${from ?? 'blank'}  to ${to}`);
           break;
     
         // Add more cases for other command names if needed
@@ -98,7 +103,6 @@ const App: React.FC = () => {
           setLoading(false);
         } else if (result) {
           setLoading(false);
-          
 
           const lastMessage = updatedMessages[updatedMessages.length - 1];
 
@@ -131,7 +135,8 @@ const App: React.FC = () => {
           if (result.message.content.includes('<start_command>')) {
             setParsingCommand(true)
             var cmd_and_args = extractCommandAndArgs(result.message.content)
-            executeCommand(cmd_and_args.commandName, cmd_and_args.fromAddress, cmd_and_args.amount)
+            executeCommand({ commandName: cmd_and_args.commandName, to: cmd_and_args.to, from: cmd_and_args.from, amount: cmd_and_args.amount })
+
             // executeCommand(result.message.content)
           }
           if (parsingCommand) {
@@ -143,17 +148,101 @@ const App: React.FC = () => {
             }
             return
           }
-          // if (result.message.content.includes('<end_command>')) {
-          //   setParsingCommand(false)
-          //   executeCommand(latestCommand)
-          //   return
-          // }
           setMessages(updatedMessages);
-          
 
         }
       }
     
+
+
+
+    if ((window as any)?.ai) {
+      try {
+        const user_state = {
+          balance: data ? `${data.formatted}${data.symbol}` : undefined,
+          address,
+          network: "mainnet"
+        };
+        const userStateString = JSON.stringify(user_state, null, 2);
+
+        console.log("\n" + userStateString + '\n' + newMessage)
+
+
+       console.log('full outbound prompt: ')
+       var p =  { ...messages, messages: [{ role: 'user', content: prompt }, "User State: \n" + userStateString + '\n' + newMessage] }
+
+       
+       console.log(p)
+
+       let result = await (window as any).ai.getCompletion(
+          { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
+          //streamingOptions
+        );
+        console.log("result: ", result)
+        non_streaming_handler(result)
+
+      } catch (e) {
+        setLoading(false);
+        console.error(e);
+      }
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
+        <h1 className="text-3xl font-bold mb-4">Next JS x window.ai x web3</h1>
+        <Web3Button />
+        <div>
+        {latestCommand === "send_transaction" && (
+        <SendTransaction latestCommandArgs={latestCommandArgs} />
+        )}
+         </div>
+        
+        <div className="overflow-y-auto h-96 mb-4">
+          {messages.map((message, index) => (
+            <div key={index} className={`mb-2 ${message.role === 'user' ? 'text-right' : ''}`}>
+              <span className={`inline-block p-2 rounded-lg text-left ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
+                {message.content}
+              </span>
+            </div>
+          ))}
+          <div ref={messagesEndRef}></div>
+        </div>
+        <form onSubmit={handleSendMessage} className="flex">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="flex-grow border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className={`ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold ${loading ? 'opacity-50' : ''}`}
+          >
+            {loading ? 'Sending...' : 'Send'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
+
+
 
     
 
@@ -221,83 +310,3 @@ const App: React.FC = () => {
     //     }
     //   },
     // };
-
-    if ((window as any)?.ai) {
-      try {
-      //  let accountState = await useAccount()
-        // console.log("accountState: ", accountState)
-        const user_state = {
-          balance: data ? `${data.formatted}${data.symbol}` : undefined,
-          address,
-          network: "mainnet"
-        };
-
-
-       console.log('about to api req: ', { messages: [{ role: 'system', content: prompt }, ...messages, newMessage] } )
-
-       let result = await (window as any).ai.getCompletion(
-          { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
-          //streamingOptions
-        );
-        console.log("result: ", result)
-        non_streaming_handler(result)
-      } catch (e) {
-        setLoading(false);
-        console.error(e);
-      }
-    }
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-4">Next JS x window.ai x web3</h1>
-        <Web3Button />
-        <div>
-        {latestCommand === "send_transaction" && (
-        <SendTransaction latestCommandArgs={latestCommandArgs} />
-        )}
-
-         </div>
-        
-        <div className="overflow-y-auto h-96 mb-4">
-          {messages.map((message, index) => (
-            <div key={index} className={`mb-2 ${message.role === 'user' ? 'text-right' : ''}`}>
-              <span className={`inline-block p-2 rounded-lg text-left ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'}`}>
-                {message.content}
-              </span>
-            </div>
-          ))}
-          <div ref={messagesEndRef}></div>
-        </div>
-        <form onSubmit={handleSendMessage} className="flex">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="flex-grow border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className={`ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold ${loading ? 'opacity-50' : ''}`}
-          >
-            {loading ? 'Sending...' : 'Send'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default App;

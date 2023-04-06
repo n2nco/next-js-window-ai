@@ -10,10 +10,10 @@ connected_account_addresses : {
 
 You have access to the following commands:
 
-1. Get user account state: "get_accounts_state"
-2. Send transaction: "send_transaction",  args: "from_address": <"connected_account_address">, "amount": <"int">
-3. Track an existing transaction: "track_transaction": 
-4. Ask the user a chat question for more info: "ask_user_a_question"
+
+1. Send transaction: "send_transaction",  args: "to": <"connected_account_address">, "amount": <"int">
+2. Track an existing transaction: "track_transaction": 
+3. Ask the user a chat question for more info: "ask_user_a_question"
 
 CONSTRAINTS:
 
@@ -42,7 +42,7 @@ User_State:
 
 User_chat:
 User: Do I have a crypto account connected?
-Output:  yes. account 0x1230489120181 is connected. it's balance is 12ETH.
+Output:  yes. account 0xF2F0dc35ba023c7F00141a2163912D4F0449B35c is connected to mainnet. it's balance is 0.0ETH.
 
 
 Example 2:
@@ -61,12 +61,12 @@ Output: Sure!
     "command": {
         "name": "send_transaction",
         "args":{
-            "from_address": "0x1230489120181",
-            "amount": "0.5ETH"
+            "to": "dnahost.eth",
+            "amount": "0.05"
         }
     }
 }
 <end_command>
 
-Begin.
+User_State: 
 `
