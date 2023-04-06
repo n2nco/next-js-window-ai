@@ -5,6 +5,7 @@ import {prompt} from './prompt'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
 import { useBalance } from 'wagmi'
+import { getNetwork } from '@wagmi/core'
 
 
 import { SendTransaction } from './SendTransaction'
@@ -109,6 +110,7 @@ const App: React.FC = () => {
           if (lastMessage.role === 'user') { // this is the first message from the assistant
             console.log("result.message: ")
             console.log(result.message)
+            result.message.content = result.message.content.replace(/^Output:\s*/, ''); //remove 'Output: ' from the beginning of the message
 
             // executeCommand(result.message)
             setLoading(false);
@@ -154,10 +156,12 @@ const App: React.FC = () => {
       }
     
 
-
-
     if ((window as any)?.ai) {
       try {
+        const { chain, chains } = getNetwork()
+        console.log(chain)
+
+
         const user_state = {
           balance: data ? `${data.formatted}${data.symbol}` : undefined,
           address,
@@ -165,20 +169,26 @@ const App: React.FC = () => {
         };
         const userStateString = JSON.stringify(user_state, null, 2);
 
-        console.log("\n" + userStateString + '\n' + newMessage)
+        // console.log("\n" + userStateString + '\n' + newMessage)
+      
+
 
 
        console.log('full outbound prompt: ')
-       var p =  { ...messages, messages: [{ role: 'user', content: prompt }, "User State: \n" + userStateString + '\n' + newMessage] }
-
+       var p =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
        
-       console.log(p)
+      //  console.log(JSON.stringify(p))
+      //  var p_str = JSON.stringify(p)
 
        let result = await (window as any).ai.getCompletion(
-          { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
+          { messages: [...messages, { role: 'user', content: p} ]}//new - TODO fix where the prompt is situated
+
+          // { messages: [{ role: 'user', content: prompt }, ...messages, newMessage] },
+
           //streamingOptions
         );
         console.log("result: ", result)
+
         non_streaming_handler(result)
 
       } catch (e) {
