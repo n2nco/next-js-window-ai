@@ -2,11 +2,54 @@ import { useSendTransaction, usePrepareSendTransaction, useEnsAddress, mainnet, 
 import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
 
-
 export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = {} } = {}) {
   const [value, setValue] = useState(amount);
   const [resolvedAddress, setResolvedAddress] = useState('');
   const [isSettledTx, setSettledTx] = useState(null);
+
+  const config = {
+    request: {
+      to: to,
+      value: ethers.utils.parseEther(value),
+    },
+  };
+
+  const { data, isSettled, status, sendTransaction } = useSendTransaction(config);
+
+  const { isLoading, isSuccess } = useWaitForTransaction({
+    hash: data?.hash,
+  });
+
+  const triggerSendTransaction = async () => {
+    if (sendTransaction && to && amount) {
+      let x = await sendTransaction();
+      console.log(x);
+    }
+  };
+
+  useEffect(() => {
+    if (to && amount) {
+      triggerSendTransaction();
+    }
+  }, [to, amount]);
+
+  return (
+    <div>
+      {isSettledTx && <p>{data ? data : 'no data'}</p>}
+      {isLoading && <div>Check Wallet</div>}
+      {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
+      {isSuccess && (
+        <div>
+          Successfully sent {amount} ether to {to}
+          <div>
+            <a href={`https://etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
   // useEffect(() => {
   //   const resolveEnsAddress = async () => {
@@ -31,20 +74,8 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
   //   },
   // })
 
-
-  var config
-  if (to && amount) {
-    config = { config } = usePrepareSendTransaction({
-      request: {
-        to: to,
-        // gasLimit: 21000,
-        value: ethers.utils.parseEther(value),
-      },
-      chainId: mainnet.id,
-    })
-      // chainId: 1,
-   
-
+        // chainId: 1,
+  
       // onSuccess(data) {
       //   console.log('Success', data);
       //   alert('Success', data);
@@ -57,41 +88,3 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
       //   setSettledTx({ data, error })
       // },
     // });
-  }
-
-  const { data, isSettled, status, sendTransaction } = useSendTransaction(config);
- 
-  const { isLoading, isSuccess } = useWaitForTransaction({
-    hash: data?.hash,
-  })
-
-  const triggerSendTransaction = async () => {
-    if (sendTransaction && to && amount) {
-      let x  = await sendTransaction();
-      console.log(x)
-    }
-  };
-
-  useEffect(() => {
-    triggerSendTransaction();
-  }, []);
-
-  return (
-    <div>
-      {/* <button disabled={!sendTransaction} onClick={() => sendTransaction?.()}>
-        Send Transaction
-      </button> */}
-       {isSettledTx && <p>{data ? data : "no data"}</p>}
-      {isLoading && <div>Check Wallet</div>}
-      {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
-      {isSuccess && (
-        <div>
-          Successfully sent {amount} ether to {to}
-          <div>
-            <a href={`https://etherscan.io/tx/${data?.hash}`}>Etherscan</a>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

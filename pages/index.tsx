@@ -11,9 +11,6 @@ import { getNetwork } from '@wagmi/core'
 import { SendTransaction } from './SendTransaction'
 
 
-
-
-
 interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
@@ -171,8 +168,6 @@ const App: React.FC = () => {
         // console.log("\n" + userStateString + '\n' + newMessage)
       
 
-
-
        console.log('full outbound prompt: ')
        var p =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
        
@@ -187,7 +182,6 @@ const App: React.FC = () => {
           //streamingOptions
         );
         console.log("result: ", result)
-
         non_streaming_handler(result)
 
       } catch (e) {
