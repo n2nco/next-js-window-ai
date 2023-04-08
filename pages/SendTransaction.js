@@ -7,6 +7,8 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
   const [value, setValue] = useState(amount);
   const [resolvedAddress, setResolvedAddress] = useState('');
   const [isSettledTx, setSettledTx] = useState(null);
+  const [currentTrx, setCurrentTrx] = useState(null)
+  
 
   const textToHex = (text) => {
     console.log('inside textToHex - sending the following text in input_data --> ', text)
@@ -21,7 +23,6 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
     },
     }
   
-
   const { data: tx_data, isSettled, status, sendTransaction } = useSendTransaction(config);
   const { isLoading, isSuccess } = useWaitForTransaction({
     hash: tx_data?.hash,
@@ -29,21 +30,26 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
 
   const triggerSendTransaction = async () => {
     if (sendTransaction && to && amount) {
-      let x = await sendTransaction();
-      console.log(x);
+      console.log('triggered sent transcation')
+      let x = await sendTransaction("");
     }
-  };
-
-
-  
-  
-
+  };  
+  // to prevent useEffect from running twice in strict mode
+  var isEffect = false
   useEffect(() => {
+    // to prevent useEffect from running twice in strict mode
+    if (isEffect) { isEffect = false; return;}
+
     if (to && amount) {
+      console.log("useEffect the")
       triggerSendTransaction();
     }
+
+    // to prevent useEffect from running twice in strict mode
+    isEffect = true;
   }, [to, amount]);
 
+  console.log("rendered send transaction componenet")
   return (
     <div>
       {isSettledTx && <p>{tx_data ? tx_data : 'no data'}</p>}
