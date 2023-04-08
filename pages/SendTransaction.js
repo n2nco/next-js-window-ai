@@ -9,28 +9,26 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
   const [isSettledTx, setSettledTx] = useState(null);
   const [currentTrx, setCurrentTrx] = useState(null)
   
-
   const textToHex = (text) => {
     console.log('inside textToHex - sending the following text in input_data --> ', text)
     return ethers.utils.hexlify(toUtf8Bytes(text));
   };
-  
+
   const config = {
     request: {
       to: to,
       value: ethers.utils.parseEther(value),
       data: textToHex(String(input_data)),
     },
-    }
-  
+  }
+
   const { data: tx_data, isSettled, status, sendTransaction } = useSendTransaction(config);
   const { isLoading, isSuccess } = useWaitForTransaction({
     hash: tx_data?.hash,
   });
-
+  
   const triggerSendTransaction = async () => {
     if (sendTransaction && to && amount) {
-      console.log('triggered sent transcation')
       let x = await sendTransaction("");
     }
   };  
@@ -41,7 +39,6 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
     if (isEffect) { isEffect = false; return;}
 
     if (to && amount) {
-      console.log("useEffect the")
       triggerSendTransaction();
     }
 

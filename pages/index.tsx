@@ -291,8 +291,9 @@ const App: React.FC = () => {
         <br/>
         
         <div>
-        {(latestCommand === "send_transaction" && SendTransaction) ? 
-          <SendTransaction latestCommandArgs={latestCommandArgs} /> : null}
+        {latestCommand === "send_transaction" && (
+          <SendTransaction latestCommandArgs={latestCommandArgs} />
+        )}
          </div>
         
         <div className="overflow-y-auto h-96 mb-4">
