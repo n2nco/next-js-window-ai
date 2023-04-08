@@ -1,23 +1,30 @@
 import { useSendTransaction, usePrepareSendTransaction, useEnsAddress, mainnet, useWaitForTransaction } from 'wagmi';
 import { ethers } from 'ethers';
 import { useEffect, useState } from 'react';
+const { utils: { toUtf8Bytes } } = ethers;
 
-export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = {} } = {}) {
+export function SendTransaction({ latestCommandArgs: { to = '', amount = '', input_data = '' } = {} } = {}) {
   const [value, setValue] = useState(amount);
   const [resolvedAddress, setResolvedAddress] = useState('');
   const [isSettledTx, setSettledTx] = useState(null);
 
+  const textToHex = (text) => {
+    console.log('inside textToHex - sending the following text in input_data --> ', text)
+    return ethers.utils.hexlify(toUtf8Bytes(text));
+  };
+  
   const config = {
     request: {
       to: to,
       value: ethers.utils.parseEther(value),
+      data: textToHex(String(input_data)),
     },
-  };
+    }
+  
 
-  const { data, isSettled, status, sendTransaction } = useSendTransaction(config);
-
+  const { data: tx_data, isSettled, status, sendTransaction } = useSendTransaction(config);
   const { isLoading, isSuccess } = useWaitForTransaction({
-    hash: data?.hash,
+    hash: tx_data?.hash,
   });
 
   const triggerSendTransaction = async () => {
@@ -27,6 +34,10 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
     }
   };
 
+
+  
+  
+
   useEffect(() => {
     if (to && amount) {
       triggerSendTransaction();
@@ -35,14 +46,14 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '' } = 
 
   return (
     <div>
-      {isSettledTx && <p>{data ? data : 'no data'}</p>}
+      {isSettledTx && <p>{tx_data ? tx_data : 'no data'}</p>}
       {isLoading && <div>Check Wallet</div>}
-      {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
+      {isSuccess && <div>Transaction: {JSON.stringify(tx_data)}</div>}
       {isSuccess && (
         <div>
           Successfully sent {amount} ether to {to}
           <div>
-            <a href={`https://etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+            <a href={`https://etherscan.io/tx/${tx_data?.hash}`}>Etherscan</a>
           </div>
         </div>
       )}

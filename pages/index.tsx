@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Web3Button } from '@web3modal/react'
 import {prompt} from './prompt'
 
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useEnsName } from 'wagmi'
 import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
 import { useBalance } from 'wagmi'
 import { getNetwork } from '@wagmi/core'
 
 import { SendTransaction } from './SendTransaction'
+import { Header } from './logo'
 
 
 interface Message {
@@ -22,12 +23,20 @@ const App: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [parsingCommand, setParsingCommand] = useState<boolean>(false);
   const [latestCommand, setLatestCommand] = useState<string>("");
-  const [latestCommandArgs, setLatestCommandArgs] = useState<object>({to: "", amount: ""});
+  const [latestCommandArgs, setLatestCommandArgs] = useState<object>({to: "", amount: "", input_data: ""});
   
   const { address, isConnecting, isDisconnected } = useAccount()
   const { data, isError, isLoading } = useBalance({
     address: address
   })
+  // var ensName: string = ""
+  // if (address && !ensName) {
+    const { data: ensName, isError: ensErr, isLoading: ensLoading } = useEnsName({
+      address: address,
+    })
+  //   console.log("data from useEns: " + data, " using address: " + address ?? "blank")
+  //   ensName = data ? data : ""
+  // }
 
 
   const extractCommandAndArgs = (inputString: string) => {
@@ -48,13 +57,14 @@ const App: React.FC = () => {
       const to = commandObj.command?.args?.to ?? '';
       const amount = commandObj.command?.args?.amount ?? '';
       const from = commandObj.command?.args?.from ?? '';
+      const input_data = commandObj.command?.args?.input_data ?? '';
 
     
-      return { commandName, to, amount, from  };
+      return { commandName, to, amount, from, input_data};
     }
     
 
-    const executeCommand = ({ commandName, to, from, amount }: { commandName: any, to?: any, from?: any, amount?: any }) => {
+    const executeCommand = ({ commandName, to, from, amount, input_data }: { commandName: any, to?: any, from?: any, amount?: any, input_data?: any }) => {
       switch (commandName) {
         case "ask_user_a_question":
           // Do something with the fromAddress and amount variables just in case?
@@ -65,9 +75,9 @@ const App: React.FC = () => {
 
         case "send_transaction":
           // Do something with the fromAddress and amount variables
-          setLatestCommandArgs({to: to, amount: amount})
+          setLatestCommandArgs({to: to, amount: amount, input_data: input_data})
           setLatestCommand("send_transaction")
-          console.log(`case send_transaction hit. Sending ${amount} from ${from ?? 'blank'}  to ${to}`);
+          console.log(`case send_transaction hit. Sending ${amount} from ${from ?? 'blank'}  to ${to} with input_data ${input_data}`);
           break;
     
         // Add more cases for other command names if needed
@@ -78,12 +88,30 @@ const App: React.FC = () => {
     }
     
   
+  const first_message = messages.length === 0;
 
 
   const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!inputValue) return;
-    const newMessage: Message = { role: 'user', content: inputValue };
+    var newMessage : Message;
+    if (first_message) { //On 1st message, we prepend prompt
+      const { chain, chains } = getNetwork()
+      // console.log(chain)
+      const user_state = {
+        balance: data ? `${data.formatted}${data.symbol}` : undefined,
+        address,
+        network: chain?.name || 'Unknown',
+        ens_name: ensName ?? 'langwallet.eth',
+      };
+      const userStateString = JSON.stringify(user_state, null, 2);
+      var prompt_userstate_newmessage_firtst_run =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" 
+      newMessage = { role: 'user', content: prompt_userstate_newmessage_firtst_run + inputValue };
+    }
+    else {
+      newMessage = { role: 'user', content: inputValue };
+    }
+
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputValue('');
     setLoading(true);
@@ -123,9 +151,7 @@ const App: React.FC = () => {
                 content: message.content + result.message.content,
               };
             }
-    
-            return message;
-    
+         return message;
           });
         }
         // Update the state with the new updatedMessages array
@@ -134,8 +160,7 @@ const App: React.FC = () => {
         if (result.message.content.includes('<start_command>')) {
           setParsingCommand(true);
           var cmd_and_args = extractCommandAndArgs(result.message.content);
-          executeCommand({ commandName: cmd_and_args.commandName, to: cmd_and_args.to, from: cmd_and_args.from, amount: cmd_and_args.amount });
-    
+          executeCommand({ commandName: cmd_and_args.commandName, to: cmd_and_args.to, from: cmd_and_args.from, amount: cmd_and_args.amount, input_data: cmd_and_args.input_data });
           // executeCommand(result.message.content)
         }
         if (parsingCommand) {
@@ -148,11 +173,9 @@ const App: React.FC = () => {
           return;
         }
         setMessages(updatedMessages);
-    
       }
     }
-    
-    
+  
 
     if ((window as any)?.ai) {
       try {
@@ -164,13 +187,15 @@ const App: React.FC = () => {
           balance: data ? `${data.formatted}${data.symbol}` : undefined,
           address,
           network: chain?.name || 'Unknown',
+          ens_name: ensName ?? 'langwallet.eth',
 
         };
         const userStateString = JSON.stringify(user_state, null, 2);
 
       console.log('new msg:', newMessage.content)
 
-       var prompt_userstate_newmessage =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content
+       var prompt_userstate_newmessage =  "Latest User State: \n" + userStateString + '\n' + "User: \n" + newMessage.content //removed prompt, only adding it to the first message
+
        var content_for_ai = { messages: [...messages, { role: 'user', content: prompt_userstate_newmessage} ]}
        console.log('full outbound prompt: ')
        console.dir(content_for_ai)
@@ -210,6 +235,19 @@ const App: React.FC = () => {
   // }
 
   function formatResponseIfNeeded(inputString: string) {
+    //remove prompt from this input string
+    inputString = inputString.replace(prompt, '')
+    //remove 1st portion of string up  until the part containing 'User: '. only keep what's after user
+    // inputString = inputString.replace(/.*User:\s*/, '')
+    const userMarker = "User: \n";
+    if (inputString.includes(userMarker)) {
+      const startIndex = inputString.indexOf(userMarker) + userMarker.length;
+      const result = inputString.slice(startIndex).trim();
+      inputString = result;
+    }
+    // const regex = /^.*\n}\n/;
+    // inputString = inputString.replace(regex, '');
+
     const questionRegex = /"question":\s*"([^"]+)"/;
     const sendTransactionRegex = /"name":\s*"send_transaction",\s*"args":\s*\{\s*"to":\s*"([^"]+)",\s*"amount":\s*"([^"]+)"/;
     let match;
@@ -238,10 +276,20 @@ const App: React.FC = () => {
 
 
   return (
+    <div>
+
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+    {/* <h1 className="text-3xl font-bold mb-4" >LangWallet</h1> */}
       <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-4">Next JS x window.ai x web3</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center"><Header></Header>LangWallet  </h1>
+
+  
         <Web3Button />
+
+        <br/>
+        <br/>
+        
         <div>
         {latestCommand === "send_transaction" && (
           <SendTransaction latestCommandArgs={latestCommandArgs} />
@@ -275,6 +323,7 @@ const App: React.FC = () => {
           </button>
         </form>
       </div>
+    </div>
     </div>
   );
 };
