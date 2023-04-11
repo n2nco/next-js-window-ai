@@ -6,9 +6,11 @@ import { useAccount, useConnect, useDisconnect, useEnsName } from 'wagmi'
 import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
 import { useBalance } from 'wagmi'
 import { getNetwork } from '@wagmi/core'
+import { FaTwitter, FaDiscord} from 'react-icons/fa'
 
 import { SendTransaction } from './SendTransaction'
 import { Header } from './logo'
+import BackgroundImage from './backgroundimage';
 
 
 interface Message {
@@ -34,10 +36,6 @@ const App: React.FC = () => {
     const { data: ensName, isError: ensErr, isLoading: ensLoading } = useEnsName({
       address: address,
     })
-  //   console.log("data from useEns: " + data, " using address: " + address ?? "blank")
-  //   ensName = data ? data : ""
-  // }
-
 
   const extractCommandAndArgs = (inputString: string) => {
       const startCommandString = '<start_command>';
@@ -86,10 +84,8 @@ const App: React.FC = () => {
           break;
       }
     }
-    
   
   const first_message = messages.length === 0;
-
 
   const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -279,17 +275,14 @@ const App: React.FC = () => {
   console.log("wallet balance :: ", data)
 
   return (
-    <div>
+    <div> <BackgroundImage/>
 
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
     {/* <h1 className="text-3xl font-bold mb-4" >LangWallet</h1> */}
-      <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6">
-      <h1 className="text-3xl font-bold mb-4 text-center"><Header></Header>LangWallet  </h1>
-
-  
+      <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 bg-white shadow-lg rounded-lg p-6"> 
+      <h1 className="bg-gradient-to-r from-blue-500 to-black text-transparent bg-clip-text text-center py-3 font-bold text-4xl"> <Header img_src="/langwallet.png"></Header>LangWallet</h1>
         <Web3Button />
-
         <br/>
         <br/>
         
@@ -309,6 +302,7 @@ const App: React.FC = () => {
           ))}
           <div ref={messagesEndRef}></div>
         </div>
+
         <form onSubmit={handleSendMessage} className="flex">
           <input
             type="text"
@@ -323,10 +317,20 @@ const App: React.FC = () => {
           >
             {loading ? 'Sending...' : 'Send'}
           </button>
+
         </form>
+        
       </div>
+      <footer className = "w-full flex justify-center absolute bottom-0">
+        <a href="https://twitter.com/langwallet" target="_blank" rel="noopener noreferrer" className="mr-4">
+         <FaTwitter className="text-2xl text-blue-500 hover:text-blue-600" />
+          </a>
+        <a href="https://discord.gg/BMt2ksbaK7" target="_blank" rel="noopener noreferrer">
+          <FaDiscord className="text-2xl text-gray-500 hover:text-gray-600" />
+        </a>
+      </footer>
     </div>
-    </div>
+  </div>
   );
 };
 
