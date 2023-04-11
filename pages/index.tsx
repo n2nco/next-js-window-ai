@@ -104,6 +104,9 @@ const App: React.FC = () => {
         network: chain?.name || 'Unknown',
         ens_name: ensName ?? 'langwallet.eth',
       };
+
+      console.log("user state :: ", user_state)
+
       const userStateString = JSON.stringify(user_state, null, 2);
       var prompt_userstate_newmessage_firtst_run =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" 
       newMessage = { role: 'user', content: prompt_userstate_newmessage_firtst_run + inputValue };
@@ -273,7 +276,7 @@ const App: React.FC = () => {
   // const extractedQuestion = extractQuestion(inputString);
   // console.log(extractedQuestion);
 
-
+  console.log("wallet balance :: ", data)
 
   return (
     <div>
@@ -291,10 +294,9 @@ const App: React.FC = () => {
         <br/>
         
         <div>
-        {latestCommand === "send_transaction" && (
-          <SendTransaction latestCommandArgs={latestCommandArgs} />
-        )}
-         </div>
+        {(latestCommand === "send_transaction" && SendTransaction) ? 
+          <SendTransaction latestCommandArgs={latestCommandArgs} /> : null}
+        </div>
         
         <div className="overflow-y-auto h-96 mb-4">
           {messages.map((message, index) => (

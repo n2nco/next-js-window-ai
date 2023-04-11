@@ -8,6 +8,7 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
   const [resolvedAddress, setResolvedAddress] = useState('');
   const [isSettledTx, setSettledTx] = useState(null);
   const [currentTrx, setCurrentTrx] = useState(null)
+  const [componentSuccess, setComponentSuccess] = useState(null)
   
   const textToHex = (text) => {
     console.log('inside textToHex - sending the following text in input_data --> ', text)
@@ -21,15 +22,23 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
       data: textToHex(String(input_data)),
     },
   }
-
-  const { data: tx_data, isSettled, status, sendTransaction } = useSendTransaction(config);
+  
+  const sendTrx  = useSendTransaction(config);
+  console.log("sendTrx:: ", sendTrx.data?.hash)
   const { isLoading, isSuccess } = useWaitForTransaction({
-    hash: tx_data?.hash,
+    hash: sendTrx.data?.hash,
+    onSettled(data, error) {
+      console.log('Settled:::: ', { data, error })
+      if(!error){
+        console.log(' transaction settled :: ')
+        setComponentSuccess(true)
+      }
+    },
   });
   
   const triggerSendTransaction = async () => {
-    if (sendTransaction && to && amount) {
-      let x = await sendTransaction("");
+    if ( to && amount) {
+      let x = await sendTrx.sendTransaction("");
     }
   };  
   // to prevent useEffect from running twice in strict mode
@@ -38,30 +47,37 @@ export function SendTransaction({ latestCommandArgs: { to = '', amount = '', inp
     // to prevent useEffect from running twice in strict mode
     if (isEffect) { isEffect = false; return;}
 
-    if (to && amount) {
+    if (to && amount && !componentSuccess ) {
       triggerSendTransaction();
     }
 
     // to prevent useEffect from running twice in strict mode
     isEffect = true;
-  }, [to, amount]);
+  }, [to, amount, componentSuccess ]);
 
-  console.log("rendered send transaction componenet")
-  return (
+  console.log("-- rendered send transaction componenet --")
+  console.log("isSettledTx:: ", isSettledTx)
+  console.log("isLoading:: ", isLoading)
+  console.log("isSuccess:: ", isSuccess)
+
+  if(isSettledTx){ return <div><p>{sendTrx.data ? sendTrx.data : 'no data'}</p></div> }
+
+  if(isLoading){ return (<div><div>Check Wallet</div></div>)}
+
+  if(componentSuccess ){ 
+    return (
     <div>
-      {isSettledTx && <p>{tx_data ? tx_data : 'no data'}</p>}
-      {isLoading && <div>Check Wallet</div>}
-      {isSuccess && <div>Transaction: {JSON.stringify(tx_data)}</div>}
-      {isSuccess && (
+      <div>Transaction: {JSON.stringify(sendTrx.data)}</div>
         <div>
           Successfully sent {amount} ether to {to}
           <div>
-            <a href={`https://etherscan.io/tx/${tx_data?.hash}`}>Etherscan</a>
+            <a href={`https://etherscan.io/tx/${sendTrx.data?.hash}`}>Etherscan</a>
           </div>
         </div>
-      )}
     </div>
-  );
+    )}
+    
+  return (<div></div>)
 }
 
 

@@ -4,9 +4,9 @@ import type { AppProps } from 'next/app'
 import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum'
 import { Web3Modal } from '@web3modal/react'
 import { configureChains, createClient, WagmiConfig } from 'wagmi'
-import { arbitrum, mainnet, polygon } from 'wagmi/chains'
+import { arbitrum, mainnet, polygon, goerli } from 'wagmi/chains'
 
-const chains = [arbitrum, mainnet, polygon]
+const chains = [arbitrum, mainnet, polygon, goerli]
 const projectId = '53d64fe780a387be9269a04412507ccc'
 
 
