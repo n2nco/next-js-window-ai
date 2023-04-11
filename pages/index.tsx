@@ -14,6 +14,8 @@ import BackgroundImage from './backgroundimage';
 import '../styles/Home.module.css'
 import TypingAnimation from "../components/TypingAnimation";
 import { Button } from 'flowbite';
+import useDarkMode  from './useDarkMode';
+import { isBooleanObject } from 'util/types';
 
 
 interface Message {
@@ -29,7 +31,14 @@ const App: React.FC = () => {
   const [parsingCommand, setParsingCommand] = useState<boolean>(false);
   const [latestCommand, setLatestCommand] = useState<string>("");
   const [latestCommandArgs, setLatestCommandArgs] = useState<object>({to: "", amount: "", input_data: ""});
-  
+  // const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useDarkMode();
+  const toggleDarkMode = () => {
+    setDarkMode((prevDarkMode: any) => !prevDarkMode);
+  };
+
+
+
   const { address, isConnecting, isDisconnected } = useAccount()
   const { data, isError, isLoading } = useBalance({
     address: address
@@ -278,13 +287,21 @@ const App: React.FC = () => {
   console.log("wallet balance :: ", data)
 
   return (
+       <div className = {darkMode ? "dark" : ""}>
     <div> <BackgroundImage/>
 
-    <div className="min-h-screen flex items-center justify-center bg-black">
+
+    
+    <button 
+    onClick={toggleDarkMode }
+    className="absolute top-4 left-2 z-10 flex items-center justify-centertransform rounded-xl bg-purple-600 text-white py-1 px-2 backdrop-blur-xl bg-opacity-60">  {darkMode ? '💡' : '🌙'} </button>
+    
+  <div className="min-h-screen flex items-center justify-center shadow-lg bg-white dark:bg-black dark:text-white">
+  
 
     {/* <h1 className="text-3xl font-bold mb-4" >LangWallet</h1> */}
       <div className="w-full sm:w-3/4 lg:w-1/2 xl:w-1/2 p-6 rounded-lg bg-purple-300 bg-clip-padding backdrop-filter backdrop-blur-xl bg-opacity-10 border border-gray-100"> 
-      <h1 className="bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text text-center py-3 font-bold text-4xl"> <Header img_src="/langwallet.png"></Header>LangWallet</h1>
+      <h1 className="bg-gradient-to-r from-blue-400 to-purple-600 text-transparent bg-clip-text text-center py-3 font-bold text-4xl"> <Header img_src="/langwallet.png"></Header>LangWallet</h1>
       {/* <div>
           <Button color="dark">
             Dark mode
@@ -303,7 +320,7 @@ const App: React.FC = () => {
         <div className="overflow-y-auto h-96 mb-4">
           {messages.map((message, index) => (
             <div key={index} className={`mb-2 ${message.role === 'user' ? 'text-right' : ''}`}>
-              <span className={`inline-block p-2 rounded-lg text-left ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-350 text-white'}`}>
+              <span className={`inline-block p-2 rounded-lg text-left ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-350 text-black dark:text-white'}`}>
 
                 {formatResponseIfNeeded(message.content)}
               </span>
@@ -323,9 +340,10 @@ const App: React.FC = () => {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="flex-grow border border-gray-300 rounded-lg p-1 text-sm focus:outline-none focus:border-blue-500"
+            className="flex-grow border border-gray-300 rounded-lg p-1 text-sm dark: text-black focus:outline-none focus:border-blue-500"
           />
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded-lg  ${loading ? 'opacity-50' : ''}"
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded-lg back
+          ${loading ? 'opacity-50' : ''}"
             type="submit"
             disabled={loading}
           >
@@ -342,6 +360,7 @@ const App: React.FC = () => {
           <FaDiscord className="text-2xl text-gray-500 hover:text-gray-600" />
         </a>
       </footer>
+    </div>
     </div>
   </div>
   );
