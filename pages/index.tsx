@@ -13,7 +13,6 @@ import { Header } from './logo'
 import BackgroundImage from './backgroundimage';
 import '../styles/Home.module.css'
 import TypingAnimation from "../components/TypingAnimation";
-import { Button } from 'flowbite';
 import useDarkMode  from './useDarkMode';
 import { isBooleanObject } from 'util/types';
 

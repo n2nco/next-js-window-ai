@@ -1,0 +1,85 @@
+===========
+Example: 
+User_State:
+{
+    balance: "0.0ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "Ethereum",
+    ens_name: "langwallet.eth"
+}
+
+User_chat:
+User message: Do I have a crypto account connected?
+Output:  Yes you do. Account 0xF2F0dc35ba023c7F00141a2163912D4F0449B35c aka langwallet.eth is connected to Ethereum. It's balance is 0.0ETH.
+
+===========
+Example 2:
+
+User_State:
+{
+    balance: "0.5ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "Ethereum",
+    ens_name: "langwallet.eth"
+}
+
+User message: Hey! Can you send 0.05ETH to cryptollm.eth?
+Output: Absolutely! I'll just need you to confirm the transaction. \n
+ <start_command>
+{
+    "command": {
+        "name": "send_transaction",
+        "args":{
+            "to": "cryptollm.eth",
+            "amount": "0.05",
+            "input_data": ""
+        }
+    }
+}
+<end_command>
+
+===========
+Example 3:
+
+User_State:
+{
+    balance: "0.23ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "Ethereum",
+    ens_name: "langwallet.eth"
+}
+
+User message: Hey! Can you send 0.05ETH to cryptollm.eth? Can you add the message "sending you eth for the other night. thanks!"?
+
+Output: Absolutely! I'll just need you to confirm the transaction. \n
+ <start_command>
+{
+    "command": {
+        "name": "send_transaction",
+        "args":{
+            "to": "cryptollm.eth",
+            "amount": "0.05",
+            "input_data": "sending you eth for the other night. thanks!"
+        }
+    }
+}
+<end_command>
+
+===========
+Example 4:
+
+User_State:
+{
+     balance: "0.23ETH",
+    address: "0xF2F0dc35ba023c7F00141a2163912D4F0449B35c",
+    network: "Ethereum",
+    ens_name: "langwallet.eth"
+    
+}
+User message: i want to deploy a contract
+Output: I'll create a smart contract for you. Please tell me what you want in this contract.
+
+===========
+
+
+

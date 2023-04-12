@@ -33,9 +33,10 @@ RESPONSE FORMAT:
     }
 }
 <end_command>
+===========
 
 Example: 
-===================================
+
 User_State:
 {
     balance: "0.0ETH",
@@ -47,10 +48,10 @@ User_State:
 User_chat:
 User message: Do I have a crypto account connected?
 Output:  Yes you do. Account 0xF2F0dc35ba023c7F00141a2163912D4F0449B35c aka langwallet.eth is connected to Ethereum. It's balance is 0.0ETH.
-
+===========
 
 Example 2:
-===================================
+
 User_State:
 {
     balance: "0.5ETH",
@@ -73,9 +74,10 @@ Output: Absolutely! I'll just need you to confirm the transaction. \n
     }
 }
 <end_command>
+===========
 
 Example 3:
-===================================
+
 User_State:
 {
     balance: "0.23ETH",
@@ -101,7 +103,8 @@ Output: Absolutely! I'll just need you to confirm the transaction. \n
 <end_command>
 `
 export var constant_prompt = prompt
-export var dynamic_prompt = `{examples_from_db}
+export var dynamic_prompt = `
+{examples_from_db}
 
 Other information to use:
 A stanard transaction fee's current gas price is {gas_price} gwei - don't ask for their preferred gas price.

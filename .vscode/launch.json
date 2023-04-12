@@ -4,11 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
+        
         {
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost:3003",
+            "url": "http://localhost:3002",
             "webRoot": "${workspaceFolder}"
         },
 
@@ -26,6 +28,59 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current File",
+            "program": "${file}",
+            "outFiles": ["${workspaceFolder}/.next/**/*.js"],
+            "sourceMaps": true,
+            "resolveSourceMapLocations": ["${workspaceFolder}/**"],
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "internalConsoleOptions": "openOnSessionStart"
+          },
+
+
+            {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current JavaScript File",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart"
             },
+          
+          
+        
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest: Debug Current Test",
+            "program": "${workspaceFolder}/node_modules/.bin/jest",
+            "args": ["--runInBand"],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+           
+          },
+          {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Current TypeScript File",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "debug", "--", "${file}"],
+            "internalConsoleOptions": "openOnSessionStart",
+            "sourceMaps": true,
+            "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/typescript/**"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+              "TS_NODE_PROJECT": "tsconfig.debug.json"
+            },
+            "stopOnEntry": true,
+            "outFiles": ["${workspaceFolder}/.next/**/*.js"]
+
+          }
+          
+        
     ]
 }

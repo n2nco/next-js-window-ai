@@ -1,3 +1,7 @@
+- FYI - debugging new .utils in vscode:
+- enter a standalone .mjs file (e.g. utils.mjs), add breakpoints & select `Debug Current JavaScript File` (in .vscode/launch.json)
+
+
 # Next JS x window.ai
 
 This is a simple Next JS application that demonstrates how to integrate [window.ai](windowai.io) to build a chatbot interface. The app provides a user-friendly chat interface for users to communicate with an AI assistant.
