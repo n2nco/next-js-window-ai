@@ -5,18 +5,20 @@ import {
 } from "langchain/prompts";
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
 import { TextLoader } from "langchain/document_loaders/fs/text";
-import { CharacterTextSplitter } from "langchain/text_splitter"
+// import { CharacterTextSplitter } from "langchain/text_splitter"
 import { constant_prompt, dynamic_prompt } from "./utils_prompt.mjs"
 import { getEthUsdLastPrice, getAverageGasPrice } from "./utils_helpers.mjs";
+// import { PromptLayerOpenAI } from "langchain/llms/openai";
+
 import dotenv from "dotenv"
 dotenv.config()
-
 const openAiApiKey = process.env.OPENAI_API_KEY 
 
+
+//this func shouldn't be user facing
 const createVectorStore = async (directory) => {
     const loader = new TextLoader( "./examples.txt");
     const docs = await loader.load();
-
     var text = docs[0].pageContent 
     var examples = text.split('===========')
         .map(item => item.trim())
@@ -29,26 +31,29 @@ const createVectorStore = async (directory) => {
         metadata,
         new OpenAIEmbeddings({openAIApiKey: openAiApiKey}) //set env var - doesn't seem to use it on load, only for emedding the new example to compare against
       );
-
      await vectorStore.save(directory);
      return vectorStore
  }
 
-export async function langTest() {
+export async function getPrompt() {
   const rootDirectory = process.cwd();
   let vectorDirectory = `vectorstore`;
   let loadedVectorStore 
   // loadedVectorStore = await createVectorStore(vectorDirectory) //for testing
- 
 
     try {
-        loadedVectorStore = await HNSWLib.load(vectorDirectory, new OpenAIEmbeddings());
+        loadedVectorStore = await HNSWLib.load(vectorDirectory, new OpenAIEmbeddings({openAIApiKey: 
+          process.env.OPENAI_API_KEY, verbose: true}));
         console.log('vectorestore found: ', loadedVectorStore)
+      
     } catch (e) {
+        console.log('error ', e)
         console.log('no vector store found, creating one')
         loadedVectorStore = await createVectorStore(vectorDirectory)
     }
+
     const result = await loadedVectorStore.similaritySearch("what's my balance?", 2);
+    console.log(result)
     // const template = "Use the follwing information {gas_price} {eth_price}. Use the follwing examples {examples_from_db}"
     // const test_template = "What is a good name for a company that makes {eth_price}  {gas_price} {examples_from_db}";
     const template = dynamic_prompt
@@ -68,10 +73,11 @@ export async function langTest() {
   const full_prompt = constant_prompt + formatted_prompt
   console.log(full_prompt)
   console.log("\n__the remaining user_state would go here__")
+  
   return full_prompt
-}
 
-// langTest() //for testing
+}
+getPrompt() //for testing
 
 
 // console.log("running tests");

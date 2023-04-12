@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Web3Button } from '@web3modal/react'
-import {prompt} from './prompt'
+// import {prompt} from './prompt'
+// import { getPrompt } from './api/utils.js'
 
 import { useAccount, useConnect, useDisconnect, useEnsName } from 'wagmi'
 import { useSendTransaction, usePrepareSendTransaction } from 'wagmi'
@@ -35,6 +36,7 @@ const App: React.FC = () => {
   const toggleDarkMode = () => {
     setDarkMode((prevDarkMode: any) => !prevDarkMode);
   };
+  const [prompt, setPrompt] = useState<string>("")
 
 
 
@@ -47,6 +49,21 @@ const App: React.FC = () => {
     const { data: ensName, isError: ensErr, isLoading: ensLoading } = useEnsName({
       address: address,
     })
+
+    type Data = {
+      full_prompt: string
+    }
+    useEffect(() => {
+      const fetchPrompt = async () => {
+        const response = await fetch('/api/prompt');
+        const data: Data = await response.json();
+        console.log('data from api, ', data)
+        setPrompt(data.full_prompt)
+
+      };
+      fetchPrompt();
+    }, []);
+
 
   const extractCommandAndArgs = (inputString: string) => {
       const startCommandString = '<start_command>';
@@ -115,6 +132,7 @@ const App: React.FC = () => {
       console.log("user state :: ", user_state)
 
       const userStateString = JSON.stringify(user_state, null, 2);
+     // prompt = prompt ? prompt : "no prompt obtained from api"
       var prompt_userstate_newmessage_firtst_run =   prompt + "User State: \n" + userStateString + '\n' + "User: \n" 
       newMessage = { role: 'user', content: prompt_userstate_newmessage_firtst_run + inputValue };
     }
@@ -126,8 +144,6 @@ const App: React.FC = () => {
     setInputValue('');
     setLoading(true);
     let updatedMessages = [...messages, newMessage];
-
-
 
     const non_streaming_handler = async (result?: { message: Message }, error?: Error) => {
 
@@ -366,7 +382,6 @@ const App: React.FC = () => {
 };
 
 export default App;
-
 
 
 

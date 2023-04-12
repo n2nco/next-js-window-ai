@@ -25,6 +25,7 @@
     "ethers": "^5.7.2",
     "flowbite": "^1.6.5",
     "flowbite-react": "^0.4.3",
+    "fs": "^0.0.1-security",
     "hnswlib-node": "^1.4.2",
     "langchain": "^0.0.53",
     "next": "13.2.4",
